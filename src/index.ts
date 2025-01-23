@@ -3,9 +3,9 @@ import express from "express";
 import mongoose from "mongoose";
 import { Jwt } from "jsonwebtoken";
 import dotenv from "dotenv";
-
+import { UserModel } from "./db";
 dotenv.config();
-
+const JWT_PASSWORD = "1234";
 const MONGO_URL = process.env.MONGO_URL as string;
 
 main()
@@ -21,8 +21,34 @@ async function main() {
 }
 
 const app = express();
-app.post("/api/v1/signup", (req, res) => {});
-app.post("/api/v1/signin", (req, res) => {});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.post("/api/v1/signup", async(req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  try {
+   const user = new UserModel({
+    username,
+    password,
+  });
+  await user.save();
+  res.json({ message: "User created"});}
+  catch (err) {
+    res.json({ message: "User already exists"});
+  }
+});
+app.post("/api/v1/signin", async(req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  const existingUser = await UserModel.findOne({ username, password });
+  if (existingUser) {
+    const token = Jwt.sign({id:existingUser._id }, JWT_PASSWORD);
+    res.json({ token });
+  } else {
+    res.json({ message: "Invalid username or password" });
+  }
+    
+});
 app.post("/api/v1/content", (req, res) => {});
 app.get("/api/v1/content", (req, res) => {});
 app.delete("/api/v1/content", (req, res) => {});

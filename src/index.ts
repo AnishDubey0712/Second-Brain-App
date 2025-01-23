@@ -1,7 +1,7 @@
 //main index file
 import express from "express";
 import mongoose from "mongoose";
-import { Jwt } from "jsonwebtoken";
+import  Jwt  from "jsonwebtoken";
 import dotenv from "dotenv";
 import { UserModel } from "./db";
 dotenv.config();

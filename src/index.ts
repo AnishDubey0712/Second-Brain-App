@@ -51,7 +51,9 @@ app.post("/api/v1/signin", async(req, res) => {
   }
     
 });
-app.post("/api/v1/content", (req, res) => {});
+app.post("/api/v1/content", (req, res) => {
+  const link = req.body.link;
+});
 app.get("/api/v1/content", (req, res) => {});
 app.delete("/api/v1/content", (req, res) => {});
 app.post("/api/v1/brain/share", (req, res) => {});

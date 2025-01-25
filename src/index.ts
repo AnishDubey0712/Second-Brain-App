@@ -70,8 +70,24 @@ app.post("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
 });
 
 // Additional endpoints
-app.get("/api/v1/content", (req, res): void => {
-  res.json({ message: "Get content endpoint" });
+app.get("/api/v1/content",userMiddleware,async (req, res) => {
+  try {
+    // Ensure userId is extracted from middleware
+    // @ts-ignore
+    const userId = req.userId;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized access" });
+      return;
+    }
+
+    // Fetch content for the logged-in user
+    const userContent = await ContentModel.find({ userId });
+
+    res.status(200).json(userContent);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch content" });
+  }
 });
 
 app.delete("/api/v1/content", (req, res): void => {

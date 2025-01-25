@@ -81,9 +81,24 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
     }
 }));
 // Additional endpoints
-app.get("/api/v1/content", (req, res) => {
-    res.json({ message: "Get content endpoint" });
-});
+app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Ensure userId is extracted from middleware
+        // @ts-ignore
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized access" });
+            return;
+        }
+        // Fetch content for the logged-in user
+        const userContent = yield db_1.ContentModel.find({ userId });
+        res.status(200).json(userContent);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to fetch content" });
+    }
+}));
 app.delete("/api/v1/content", (req, res) => {
     res.json({ message: "Delete content endpoint" });
 });

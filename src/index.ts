@@ -3,11 +3,11 @@ import express from "express";
 import mongoose from "mongoose";
 import  Jwt  from "jsonwebtoken";
 import dotenv from "dotenv";
-import { UserModel } from "./db";
+import { UserModel,ContentModel} from "./db";
 dotenv.config();
-const JWT_PASSWORD = "1234";
+export const JWT_PASSWORD = "1234";
 const MONGO_URL = process.env.MONGO_URL as string;
-
+import { userMiddleware } from "./middleware";
 main()
   .then(() => {
     console.log("Connected to DB");
@@ -51,9 +51,17 @@ app.post("/api/v1/signin", async(req, res) => {
   }
     
 });
-app.post("/api/v1/content", (req, res) => {
+app.post("/api/v1/content", userMiddleware,async(req, res) => {
   const link = req.body.link;
   const type = req.body.type;
+  await ContentModel.create({
+    link,
+    type,
+    // @ts-ignore
+    userId: req.userId,
+    tags:[],
+  });
+  return res.json({ message: "Content created" });
 });
 app.get("/api/v1/content", (req, res) => {});
 app.delete("/api/v1/content", (req, res) => {});

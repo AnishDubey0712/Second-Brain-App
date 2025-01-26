@@ -10,7 +10,7 @@ export const JWT_PASSWORD = "1234";
 const MONGO_URL = process.env.MONGO_URL as string;
 
 import { userMiddleware } from "./middleware";
-
+//db connection
 main()
   .then(() => {
     console.log("Connected to DB");

@@ -69,10 +69,10 @@ app.post("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
   }
 });
 
-// Additional endpoints
+
 app.get("/api/v1/content",userMiddleware,async (req, res) => {
   try {
-    // Ensure userId is extracted from middleware
+   
     // @ts-ignore
     const userId = req.userId;
     if (!userId) {
@@ -90,15 +90,15 @@ app.get("/api/v1/content",userMiddleware,async (req, res) => {
   }
 });
 
-app.delete("/api/v1/content", (req, res): void => {
+app.delete("/api/v1/content", (req, res) => {
   res.json({ message: "Delete content endpoint" });
 });
 
-app.post("/api/v1/brain/share", (req, res): void => {
+app.post("/api/v1/brain/share", (req, res) => {
   res.json({ message: "Share brain endpoint" });
 });
 
-app.get("/api/v1/brain/:shareLink", (req, res): void => {
+app.get("/api/v1/brain/:shareLink", (req, res) => {
   res.json({ message: `Access brain with shareLink: ${req.params.shareLink}` });
 });
 

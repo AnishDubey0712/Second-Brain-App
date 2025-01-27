@@ -75,16 +75,16 @@ app.get("/api/v1/content",userMiddleware,async (req, res) => {
    
     // @ts-ignore
     const userId = req.userId;
-    const content = await ContentModel.find({userId:userId});
+    const content = await ContentModel.find({userId:userId}).populate("userId");
     if (!userId) {
       res.status(401).json({ message: "Unauthorized access" });
       return;
     }
 
     // Fetch content for the logged-in user
-    const userContent = await ContentModel.find({ userId });
+    //const userContent = await ContentModel.find({ userId });
 
-    res.status(200).json(userContent);
+    res.status(200).json(content);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch content" });

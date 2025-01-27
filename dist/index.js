@@ -23,6 +23,7 @@ dotenv_1.default.config();
 exports.JWT_PASSWORD = "1234";
 const MONGO_URL = process.env.MONGO_URL;
 const middleware_1 = require("./middleware");
+//db connection
 main()
     .then(() => {
     console.log("Connected to DB");
@@ -80,19 +81,19 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
         console.error(error);
     }
 }));
-// Additional endpoints
+//get content
 app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Ensure userId is extracted from middleware
         // @ts-ignore
         const userId = req.userId;
+        const content = yield db_1.ContentModel.find({ userId: userId }).populate("userId");
         if (!userId) {
             res.status(401).json({ message: "Unauthorized access" });
             return;
         }
         // Fetch content for the logged-in user
-        const userContent = yield db_1.ContentModel.find({ userId });
-        res.status(200).json(userContent);
+        //const userContent = await ContentModel.find({ userId });
+        res.status(200).json(content);
     }
     catch (error) {
         console.error(error);

@@ -100,9 +100,13 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
         res.status(500).json({ message: "Failed to fetch content" });
     }
 }));
-app.delete("/api/v1/content", (req, res) => {
-    res.json({ message: "Delete content endpoint" });
-});
+app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const contentId = req.body.contentId;
+    yield db_1.ContentModel.deleteMany({ contentId,
+        // @ts-ignore
+        userId: req.userId });
+    res.json({ message: "Content deleted" });
+}));
 app.post("/api/v1/brain/share", (req, res) => {
     res.json({ message: "Share brain endpoint" });
 });

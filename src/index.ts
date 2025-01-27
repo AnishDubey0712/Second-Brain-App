@@ -75,6 +75,7 @@ app.get("/api/v1/content",userMiddleware,async (req, res) => {
    
     // @ts-ignore
     const userId = req.userId;
+    const content = await ContentModel.find({userId
     if (!userId) {
       res.status(401).json({ message: "Unauthorized access" });
       return;

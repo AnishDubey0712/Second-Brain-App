@@ -80,7 +80,10 @@ app.get("/api/v1/content",userMiddleware,async (req, res) => {
       res.status(401).json({ message: "Unauthorized access" });
       return;
     }
-
+    if (content.length === 0) {
+      res.status(404).json({ message: "No content added yet" });
+      return;
+    }
     // Fetch content for the logged-in user
     //const userContent = await ContentModel.find({ userId });
 

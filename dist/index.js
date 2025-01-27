@@ -91,6 +91,10 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
             res.status(401).json({ message: "Unauthorized access" });
             return;
         }
+        if (content.length === 0) {
+            res.status(404).json({ message: "No content added yet" });
+            return;
+        }
         // Fetch content for the logged-in user
         //const userContent = await ContentModel.find({ userId });
         res.status(200).json(content);

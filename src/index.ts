@@ -59,7 +59,7 @@ app.post("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
       link,
       type,
       // @ts-ignore
-      userId: req.userId, // No ts-ignore needed if you extend `Request` type
+      userId: req.userId, // No ts-ignore needed if you extend `Request`
       tags:[],
     });
     res.json({ message: "Content created" });

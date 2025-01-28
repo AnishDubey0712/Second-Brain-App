@@ -1,7 +1,7 @@
 // main index file
 import express from "express";
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken"; // Use lowercase `jwt` as per convention
+import jwt from "jsonwebtoken"; 
 import dotenv from "dotenv";
 import { UserModel, ContentModel } from "./db";
 dotenv.config();

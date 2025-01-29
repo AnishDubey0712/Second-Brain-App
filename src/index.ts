@@ -93,7 +93,7 @@ app.get("/api/v1/content",userMiddleware,async (req, res) => {
     res.status(500).json({ message: "Failed to fetch content" });
   }
 });
-
+//Delete request
 app.delete("/api/v1/content", userMiddleware,async(req, res) => {
   const contentId = req.body.contentId;
   await ContentModel.deleteMany({  contentId,

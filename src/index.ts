@@ -103,6 +103,7 @@ app.delete("/api/v1/content", userMiddleware,async(req, res) => {
 });
 
 app.post("/api/v1/brain/share", (req, res) => {
+  const share  = req.body.share
   res.json({ message: "Share brain endpoint" });
 });
 

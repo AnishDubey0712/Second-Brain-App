@@ -1,15 +1,15 @@
-// main index file
 import express from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken"; 
 import dotenv from "dotenv";
-import { UserModel, ContentModel,LinkModel } from "./db";
+import { UserModel, ContentModel, LinkModel } from "./db";
 dotenv.config();
 
 export const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 const MONGO_URL = process.env.MONGO_URL as string;
 
 import { userMiddleware } from "./middleware";
+
 //db connection
 main()
   .then(() => {
@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // User signup
-app.post("/api/v1/signup", async (req, res): Promise<void> => {
+app.post("/api/v1/signup", async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = new UserModel({ username, password });
@@ -40,7 +40,7 @@ app.post("/api/v1/signup", async (req, res): Promise<void> => {
 });
 
 // User signin
-app.post("/api/v1/signin", async (req, res): Promise<void> => {
+app.post("/api/v1/signin", async (req, res) => {
   const { username, password } = req.body;
   const existingUser = await UserModel.findOne({ username, password });
   if (existingUser) {
@@ -51,58 +51,8 @@ app.post("/api/v1/signin", async (req, res): Promise<void> => {
   }
 });
 
-// Create content
-app.post("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
-  const { link, type } = req.body;
-  try {
-    await ContentModel.create({
-      link,
-      type,
-      // @ts-ignore
-      userId: req.userId, 
-      tags:[],
-    });
-    res.json({ message: "Content created" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create content" });
-    console.error(error);
-  }
-});
-
-//get content
-app.get("/api/v1/content",userMiddleware,async (req, res) => {
-  try {
-   
-    // @ts-ignore
-    const userId = req.userId;
-    const content = await ContentModel.find({userId:userId}).populate("userId");
-    if (!userId) {
-      res.status(401).json({ message: "Unauthorized access" });
-      return;
-    }
-    if (content.length === 0) {
-      res.status(404).json({ message: "No content added yet" });
-      return;
-    }
-    // Fetch content for the logged-in user
-    //const userContent = await ContentModel.find({ userId });
-
-    res.status(200).json(content);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch content" });
-  }
-});
-//Delete request
-app.delete("/api/v1/content", userMiddleware,async(req, res) => {
-  const contentId = req.body.contentId;
-  await ContentModel.deleteMany({  contentId,
-    // @ts-ignore
-    userId:req.userId});
-    res.json({message:"Content deleted"});
-});
-
-function random(length:number):string{
+// Generate random hash of 10 characters
+function random(length: number): string {
   const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
   for (let i = 0; i < length; i++) {
@@ -110,45 +60,99 @@ function random(length:number):string{
   }
   return result;
 }
-app.post("/api/v1/brain/share", userMiddleware,async(req, res) => {
-  const share  = req.body.share;
-  const hash = random(10);
-  if(share){
-   try{ await LinkModel.create({
-    hash:hash,
-    // @ts-ignore
-    userId:req.userId});
-    res.json({message:"Brain shared",hash});}
-    catch(error){
-      res.json({message:"Brain already shared"});
-    }
-  }
-    else{
-      // @ts-ignore
-      await LinkModel.deleteOne({userId:req.userId})
-    }
-  res.json({ message: "Share brain endpoint" });
-});
 
-app.get("/api/v1/brain/:shareLink", async(req, res) => {
-  const hash = req.params.shareLink;
-const link = await LinkModel.findOne({hash});
-if(!link){  
-  res.status(404).json({message:"Invalid share link"});
-  
-  res.json({ message: `Access brain with shareLink: ${req.params.shareLink}` });
+// **💡 Share brain (Create or Retrieve Existing Link)**
+app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
+  const share = req.body.share === true || req.body.share === "true"; // ✅ Converts "true"/"false" string to boolean
+const userId = (req as any).userId; // ✅ Fix TypeScript error
+
+if (!userId) {
+  res.status(401).json({ message: "Unauthorized" });
   return;
 }
-  const content = await ContentModel.find({userId:link.userId}).populate("userId");
-const user = await UserModel.findById({userId:link.userId})
-if(!user){
-  res.status(404).json({message:"User not found"});
-  return;}
-  res.json({
-    username:user.username,
-    content:content
-  })
 
+const existingLink = await LinkModel.findOne({ userId });
+
+if (share) {
+  if (existingLink) {
+    res.json({ message: "Brain already shared", hash: existingLink.hash });
+    return;
+  }
+  const hash = random(10);
+  await LinkModel.create({ hash, userId });
+  res.json({ message: "Brain shared", hash });
+} else {
+  if (!existingLink) {
+    res.status(404).json({ message: "No shared brain found to remove" });
+    return;
+  }
+
+  // **Ensure the link is deleted successfully**
+  const deleted = await LinkModel.deleteOne({ userId });
+
+  if (deleted.deletedCount > 0) {
+    res.json({ message: "Brain unshared successfully" });
+  } else {
+    res.status(500).json({ message: "Failed to unshare brain" });
+  }
+}
+
+
+});
+
+// **💡 Retrieve Content Using Shared Link**
+app.get("/api/v1/brain/:shareLink", async (req, res) => {
+  const { shareLink } = req.params;
+  const link = await LinkModel.findOne({ hash: shareLink });
+
+  if (!link) {
+    res.status(404).json({ message: "Invalid share link" });
+    return;
+  }
+
+  const content = await ContentModel.find({ userId: link.userId }).populate("userId");
+  const user = await UserModel.findById(link.userId);
+
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
+
+  res.json({ username: user.username, content });
+});
+
+// **💡 Get User Content**
+app.get("/api/v1/content", userMiddleware, async (req, res) => {
+  const userId = (req as any).userId;
+
+  if (!userId) {
+    res.status(401).json({ message: "Unauthorized access" });
+    return;
+  }
+
+  const content = await ContentModel.find({ userId }).populate("userId");
+
+  if (content.length === 0) {
+    res.status(404).json({ message: "No content added yet" });
+    return;
+  }
+
+  res.status(200).json(content);
+});
+
+// **💡 Delete Content**
+app.delete("/api/v1/content", userMiddleware, async (req, res) => {
+  const contentId = req.body.contentId;
+  const userId = (req as any).userId;
+
+  const deleted = await ContentModel.deleteMany({ _id: contentId, userId });
+
+  if (deleted.deletedCount === 0) {
+    res.status(404).json({ message: "Content not found" });
+    return;
+  }
+
+  res.json({ message: "Content deleted" });
 });
 
 // Start the server

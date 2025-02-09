@@ -7,15 +7,18 @@ exports.userMiddleware = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("./index");
 const userMiddleware = (req, res, next) => {
-    const header = req.headers["authorization"];
-    const decoded = jsonwebtoken_1.default.verify(header, index_1.JWT_PASSWORD);
-    if (decoded) {
-        // @ts-ignore
-        req.userId = decoded.id;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).json({ message: "Unauthorized: No token provided" });
+        return;
+    }
+    try {
+        const decoded = jsonwebtoken_1.default.verify(authHeader, index_1.JWT_PASSWORD);
+        req.userId = decoded.id; // ✅ Fix TypeScript error
         next();
     }
-    else {
-        res.status(401).json({ message: "You are not authorized" });
+    catch (error) {
+        res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 };
 exports.userMiddleware = userMiddleware;

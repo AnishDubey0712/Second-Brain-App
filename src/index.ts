@@ -3,10 +3,10 @@ import express from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken"; 
 import dotenv from "dotenv";
-import { UserModel, ContentModel } from "./db";
+import { UserModel, ContentModel,LinkModel } from "./db";
 dotenv.config();
 
-const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
+export const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
 const MONGO_URL = process.env.MONGO_URL as string;
 
 import { userMiddleware } from "./middleware";
@@ -102,13 +102,53 @@ app.delete("/api/v1/content", userMiddleware,async(req, res) => {
     res.json({message:"Content deleted"});
 });
 
-app.post("/api/v1/brain/share", (req, res) => {
-  const share  = req.body.share
+function random(length:number):string{
+  const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}
+app.post("/api/v1/brain/share", userMiddleware,async(req, res) => {
+  const share  = req.body.share;
+  const hash = random(10);
+  if(share){
+   try{ await LinkModel.create({
+    hash:hash,
+    // @ts-ignore
+    userId:req.userId});
+    res.json({message:"Brain shared",hash});}
+    catch(error){
+      res.json({message:"Brain already shared"});
+    }
+  }
+    else{
+      // @ts-ignore
+      await LinkModel.deleteOne({userId:req.userId})
+    }
   res.json({ message: "Share brain endpoint" });
 });
 
-app.get("/api/v1/brain/:shareLink", (req, res) => {
+app.get("/api/v1/brain/:shareLink", async(req, res) => {
+  const hash = req.params.shareLink;
+const link = await LinkModel.findOne({hash});
+if(!link){  
+  res.status(404).json({message:"Invalid share link"});
+  
   res.json({ message: `Access brain with shareLink: ${req.params.shareLink}` });
+  return;
+}
+  const content = await ContentModel.find({userId:link.userId}).populate("userId");
+const user = await UserModel.findById({userId:link.userId})
+if(!user){
+  res.status(404).json({message:"User not found"});
+  return;}
+  res.json({
+    username:user.username,
+    content:content
+  })
+
 });
 
 // Start the server

@@ -16,11 +16,11 @@ exports.JWT_PASSWORD = void 0;
 // main index file
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken")); // Use lowercase `jwt` as per convention
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = require("./db");
 dotenv_1.default.config();
-exports.JWT_PASSWORD = "1234";
+exports.JWT_PASSWORD = process.env.JWT_PASSWORD;
 const MONGO_URL = process.env.MONGO_URL;
 const middleware_1 = require("./middleware");
 //db connection
@@ -71,7 +71,7 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
             link,
             type,
             // @ts-ignore
-            userId: req.userId, // No ts-ignore needed if you extend `Request` type
+            userId: req.userId,
             tags: [],
         });
         res.json({ message: "Content created" });
@@ -104,6 +104,7 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
         res.status(500).json({ message: "Failed to fetch content" });
     }
 }));
+//Delete request
 app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const contentId = req.body.contentId;
     yield db_1.ContentModel.deleteMany({ contentId,
@@ -111,12 +112,55 @@ app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __await
         userId: req.userId });
     res.json({ message: "Content deleted" });
 }));
-app.post("/api/v1/brain/share", (req, res) => {
+function random(length) {
+    const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const share = req.body.share;
+    const hash = random(10);
+    if (share) {
+        try {
+            yield db_1.LinkModel.create({
+                hash: hash,
+                // @ts-ignore
+                userId: req.userId
+            });
+            res.json({ message: "Brain shared", hash });
+        }
+        catch (error) {
+            res.json({ message: "Brain already shared" });
+        }
+    }
+    else {
+        // @ts-ignore
+        yield db_1.LinkModel.deleteOne({ userId: req.userId });
+    }
     res.json({ message: "Share brain endpoint" });
-});
-app.get("/api/v1/brain/:shareLink", (req, res) => {
-    res.json({ message: `Access brain with shareLink: ${req.params.shareLink}` });
-});
+}));
+app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const hash = req.params.shareLink;
+    const link = yield db_1.LinkModel.findOne({ hash });
+    if (!link) {
+        res.status(404).json({ message: "Invalid share link" });
+        res.json({ message: `Access brain with shareLink: ${req.params.shareLink}` });
+        return;
+    }
+    const content = yield db_1.ContentModel.find({ userId: link.userId }).populate("userId");
+    const user = yield db_1.UserModel.findById({ userId: link.userId });
+    if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+    }
+    res.json({
+        username: user.username,
+        content: content
+    });
+}));
 // Start the server
 app.listen(3000, () => {
     console.log("Server is running on port 3000");

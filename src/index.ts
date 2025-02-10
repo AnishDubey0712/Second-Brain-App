@@ -87,7 +87,7 @@ if (share) {
     return;
   }
 
-  // Ensure the link is deleted successfully**
+  //Ensure the link is deleted successfully
   const deleted = await LinkModel.deleteOne({ userId });
 
   if (deleted.deletedCount > 0) {

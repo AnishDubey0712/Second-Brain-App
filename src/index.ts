@@ -100,7 +100,7 @@ if (share) {
 
 });
 
-// **💡 Retrieve Content Using Shared Link
+// 💡 Retrieve Content Using Shared Link
 app.get("/api/v1/brain/:shareLink", async (req, res) => {
   const { shareLink } = req.params;
   const link = await LinkModel.findOne({ hash: shareLink });

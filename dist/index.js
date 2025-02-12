@@ -134,7 +134,23 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
     }
     res.status(200).json(content);
 }));
-// **💡 Delete Content**
+//@ts-ignore
+app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { title, link } = req.body;
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+        const newContent = yield db_1.ContentModel.create({ title, link, userId, tags: [] });
+        res.status(201).json({ message: "Content added", content: newContent });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to add content" });
+    }
+}));
+// 💡 Delete Content
 app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const contentId = req.body.contentId;
     const userId = req.userId;

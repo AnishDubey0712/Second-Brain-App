@@ -121,7 +121,7 @@ app.get("/api/v1/brain/:shareLink", async (req, res) => {
   res.json({ username: user.username, content });
 });
 
-// **💡 Get User Content**
+// 💡 Get User Content**
 app.get("/api/v1/content", userMiddleware, async (req, res) => {
   const userId = (req as any).userId;
 

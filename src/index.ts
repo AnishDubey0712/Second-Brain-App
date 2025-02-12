@@ -157,7 +157,7 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
   }
 });
 
-// **💡 Delete Content**
+// 💡 Delete Content
 app.delete("/api/v1/content", userMiddleware, async (req, res) => {
   const contentId = req.body.contentId;
   const userId = (req as any).userId;

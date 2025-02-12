@@ -139,6 +139,23 @@ app.get("/api/v1/content", userMiddleware, async (req, res) => {
 
   res.status(200).json(content);
 });
+//@ts-ignore
+app.post("/api/v1/content", userMiddleware, async (req, res) => {
+  const { title, link } = req.body;
+  const userId = (req as any).userId;
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const newContent = await ContentModel.create({ title, link, userId, tags: [] });
+    res.status(201).json({ message: "Content added", content: newContent });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to add content" });
+  }
+});
 
 // **💡 Delete Content**
 app.delete("/api/v1/content", userMiddleware, async (req, res) => {

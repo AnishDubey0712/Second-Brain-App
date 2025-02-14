@@ -61,7 +61,7 @@ function random(length: number): string {
   return result;
 }
 
-// 💡 Share brain (Create or Retrieve Existing Link)**
+// 💡 Share brain (Create or Retrieve Existing Link)
 app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
   const share = req.body.share === true || req.body.share === "true"; // ✅ Converts "true"/"false" string to boolean
 const userId = (req as any).userId; // ✅ Fix TypeScript error

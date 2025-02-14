@@ -63,8 +63,8 @@ function random(length: number): string {
 
 // 💡 Share brain (Create or Retrieve Existing Link)
 app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
-  const share = req.body.share === true || req.body.share === "true"; // ✅ Converts "true"/"false" string to boolean
-const userId = (req as any).userId; // ✅ Fix TypeScript error
+  const share = req.body.share === true || req.body.share === "true";   //Converts "true"/"false" string to boolean
+const userId = (req as any).userId;   //Fix TypeScript error
 
 if (!userId) {
   res.status(401).json({ message: "Unauthorized" });

@@ -6,7 +6,7 @@ import { UserModel, ContentModel, LinkModel } from "./db";
 dotenv.config();
 
 export const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
-const MONGO_URL = process.env.MONGO_URL as string;
+const MONGO_URL = process.env.MONGO_URL as string;//db
 
 import { userMiddleware } from "./middleware";
 

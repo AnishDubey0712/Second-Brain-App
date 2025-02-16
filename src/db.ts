@@ -1,25 +1,30 @@
-//DataBase file
 import mongoose from "mongoose";
-import {Schema} from "mongoose";
+import { Schema } from "mongoose";
+
+// **User Schema**
 const UserSchema = new Schema({
-    username: {type: String, unique: true},
-    password: {type: String},
-})
-export const UserModel =  mongoose.model("User",UserSchema);
+  username: { type: String, unique: true },
+  password: { type: String },
+});
+export const UserModel = mongoose.model("User", UserSchema);
 
+// **Content Schema (Now Supports Categories & Hashtags)**
 const ContentSchema = new Schema({
-    title: {type: String},
-    link: {type: String},
-    tags:[{type:mongoose.Types.ObjectId, ref:"Tag",default:[]}],
-    userId:{type:mongoose.Types.ObjectId, ref:"User", required:true}
-
+  title: { type: String },
+  link: { type: String },
+  category: { 
+    type: String, 
+    enum: ["tweets", "videos", "links", "documents"], // Restrict to valid categories
+    required: true 
+  },
+  tags: [{ type: String }], // Hashtags as strings
+  userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
 });
+export const ContentModel = mongoose.model("Content", ContentSchema);
+
+// **Shared Link Schema**
 const LinkSchema = new Schema({
-    hash: {type: String},
-    // link: {type: String},
-    // tags:[{type:mongoose.Types.ObjectId, ref:"Tag",default:[]}],
-    userId:{type:mongoose.Types.ObjectId, ref:"User",unique:true, required:true},
-
+  hash: { type: String },
+  userId: { type: mongoose.Types.ObjectId, ref: "User", unique: true, required: true },
 });
-export const LinkModel = mongoose.model("Link",LinkSchema);
-export const ContentModel = mongoose.model("Content",ContentSchema);
+export const LinkModel = mongoose.model("Link", LinkSchema);

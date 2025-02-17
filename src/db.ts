@@ -10,16 +10,13 @@ export const UserModel = mongoose.model("User", UserSchema);
 
 // **Content Schema (Now Supports Categories & Hashtags)**
 const ContentSchema = new Schema({
-  title: { type: String },
-  link: { type: String },
-  category: { 
-    type: String, 
-    enum: ["tweets", "videos", "links", "documents"], // Restrict to valid categories
-    required: true 
-  },
-  tags: [{ type: String }], // Hashtags as strings
-  userId: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+  title: { type: String, required: true },
+  link: { type: String, required: true },
+  type: { type: String, enum: ["tweets", "videos", "links", "documents", "tags"], required: true }, // 🔥 New Field
+  tags: [{ type: mongoose.Types.ObjectId, ref: "Tag", default: [] }],
+  userId: { type: mongoose.Types.ObjectId, ref: "User", required: true }
 });
+
 export const ContentModel = mongoose.model("Content", ContentSchema);
 
 // **Shared Link Schema**

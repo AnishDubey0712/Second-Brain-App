@@ -8,7 +8,7 @@ const UserSchema = new Schema({
 });
 export const UserModel = mongoose.model("User", UserSchema);
 
-// **Content Schema (Now Supports Categories & Hashtags)**
+// Content Schema (Now Supports Categories & Hashtags)**
 const ContentSchema = new Schema({
   title: { type: String, required: true },
   link: { type: String, required: true },

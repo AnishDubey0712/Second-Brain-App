@@ -148,7 +148,7 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  // ✅ Validate category type
+ 
   const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
   if (!allowedTypes.includes(type)) {
     return res.status(400).json({ message: "Invalid content type" });

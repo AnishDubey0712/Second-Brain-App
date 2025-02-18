@@ -122,26 +122,35 @@ app.get("/api/v1/brain/:shareLink", async (req, res) => {
 });
 
 // 💡 Get User Content
-app.get("/api/v1/content", userMiddleware, async (req, res) => {
-  const userId = (req as any).userId;
-  const { type } = req.query; // ✅ Filter by type
+app.get("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized access" });
+      return;
+    }
 
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized access" });
+    const { type } = req.query; // ✅ Extract query parameter
+    const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
+
+    // ✅ Validate type parameter (optional)
+    if (type && !allowedTypes.includes(type as string)) {
+      res.status(400).json({ message: "Invalid content type" });
+      return;
+    }
+
+    // ✅ Construct dynamic query (fetch all or filter by type)
+    const query: any = { userId };
+    if (type) query.type = type;
+
+    const content = await ContentModel.find(query).populate("userId");
+
+    // ✅ Return empty array if no content found
+    res.status(200).json(content.length ? content : []);
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-
-  let query = { userId };
-  if (type) {
-    query = { ...query, type }; // ✅ Fetch only selected category
-  }
-
-  const content = await ContentModel.find(query).populate("userId");
-
-  if (content.length === 0) {
-    return res.status(404).json({ message: "No content found" });
-  }
-
-  res.status(200).json(content);
 });
 
 //@ts-ignore

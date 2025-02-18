@@ -124,21 +124,26 @@ app.get("/api/v1/brain/:shareLink", async (req, res) => {
 // 💡 Get User Content
 app.get("/api/v1/content", userMiddleware, async (req, res) => {
   const userId = (req as any).userId;
+  const { type } = req.query; // ✅ Filter by type
 
   if (!userId) {
-    res.status(401).json({ message: "Unauthorized access" });
-    return;
+    return res.status(401).json({ message: "Unauthorized access" });
   }
 
-  const content = await ContentModel.find({ userId }).populate("userId");
+  let query = { userId };
+  if (type) {
+    query = { ...query, type }; // ✅ Fetch only selected category
+  }
+
+  const content = await ContentModel.find(query).populate("userId");
 
   if (content.length === 0) {
-    res.status(404).json({ message: "No content added yet" });
-    return;
+    return res.status(404).json({ message: "No content found" });
   }
 
   res.status(200).json(content);
 });
+
 //@ts-ignore
 app.post("/api/v1/content", userMiddleware, async (req, res) => {
   const { title, link, type } = req.body;

@@ -15,7 +15,7 @@ const userMiddleware = (req, res, next) => {
     try {
         const decoded = jsonwebtoken_1.default.verify(authHeader, index_1.JWT_PASSWORD);
         req.userId = decoded.id; // ✅ Fix TypeScript error
-        next();
+        next(); // ✅ Ensure next() is called properly
     }
     catch (error) {
         res.status(401).json({ message: "Unauthorized: Invalid token" });

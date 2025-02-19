@@ -18,9 +18,10 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = require("./db");
+const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
 exports.JWT_PASSWORD = process.env.JWT_PASSWORD;
-const MONGO_URL = process.env.MONGO_URL;
+const MONGO_URL = process.env.MONGO_URL; //db url
 const middleware_1 = require("./middleware");
 //db connection
 main()
@@ -38,6 +39,7 @@ function main() {
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use((0, cors_1.default)({ origin: "http://localhost:5173", credentials: true }));
 // User signup
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password } = req.body;
@@ -71,10 +73,10 @@ function random(length) {
     }
     return result;
 }
-// **💡 Share brain (Create or Retrieve Existing Link)**
+// 💡 Share brain (Create or Retrieve Existing Link)
 app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const share = req.body.share === true || req.body.share === "true"; // ✅ Converts "true"/"false" string to boolean
-    const userId = req.userId; // ✅ Fix TypeScript error
+    const share = req.body.share === true || req.body.share === "true"; //Converts "true"/"false" string to boolean
+    const userId = req.userId; //Fix TypeScript error
     if (!userId) {
         res.status(401).json({ message: "Unauthorized" });
         return;
@@ -120,29 +122,47 @@ app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void
     }
     res.json({ username: user.username, content });
 }));
-// **💡 Get User Content**
+// 💡 Get User Content
 app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = req.userId;
-    if (!userId) {
-        res.status(401).json({ message: "Unauthorized access" });
-        return;
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized access" });
+            return;
+        }
+        const { type } = req.query; // ✅ Extract query parameter
+        const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
+        // ✅ Validate type parameter (optional)
+        if (type && !allowedTypes.includes(type)) {
+            res.status(400).json({ message: "Invalid content type" });
+            return;
+        }
+        // ✅ Construct dynamic query (fetch all or filter by type)
+        const query = { userId };
+        if (type)
+            query.type = type;
+        const content = yield db_1.ContentModel.find(query).populate("userId");
+        // ✅ Return empty array if no content found
+        res.status(200).json(content.length ? content : []);
     }
-    const content = yield db_1.ContentModel.find({ userId }).populate("userId");
-    if (content.length === 0) {
-        res.status(404).json({ message: "No content added yet" });
-        return;
+    catch (error) {
+        console.error("Error fetching content:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-    res.status(200).json(content);
 }));
 //@ts-ignore
 app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, link } = req.body;
+    const { title, link, type } = req.body;
     const userId = req.userId;
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
+    const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
+    if (!allowedTypes.includes(type)) {
+        return res.status(400).json({ message: "Invalid content type" });
+    }
     try {
-        const newContent = yield db_1.ContentModel.create({ title, link, userId, tags: [] });
+        const newContent = yield db_1.ContentModel.create({ title, link, userId, type, tags: [] });
         res.status(201).json({ message: "Content added", content: newContent });
     }
     catch (error) {

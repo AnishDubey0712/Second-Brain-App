@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken"; 
 import dotenv from "dotenv";
 import { UserModel, ContentModel, LinkModel } from "./db";
+import cors from "cors";
+
 dotenv.config();
 
 export const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
@@ -26,6 +28,7 @@ async function main() {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 // User signup
 app.post("/api/v1/signup", async (req, res) => {
@@ -162,7 +165,6 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
- 
   const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
   if (!allowedTypes.includes(type)) {
     return res.status(400).json({ message: "Invalid content type" });
@@ -176,6 +178,7 @@ app.post("/api/v1/content", userMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to add content" });
   }
 });
+
 
 
 // 💡 Delete Content

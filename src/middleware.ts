@@ -2,19 +2,20 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_PASSWORD } from "./index";
 
-export const userMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+export const userMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    res.status(401).json({ message: "Unauthorized: No token provided" });
-    return;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized: No or invalid token provided" });
   }
 
+  const token = authHeader.split(" ")[1]; // ✅ Extract the actual token
+
   try {
-    const decoded = jwt.verify(authHeader, JWT_PASSWORD) as { id: string };
+    const decoded = jwt.verify(token, JWT_PASSWORD) as { id: string };
     (req as any).userId = decoded.id; // ✅ Fix TypeScript error
-    next(); // ✅ Ensure next() is called properly
+    next();
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized: Invalid token" });
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };

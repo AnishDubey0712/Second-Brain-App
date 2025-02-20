@@ -21,16 +21,12 @@ const db_1 = require("./db");
 const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
 exports.JWT_PASSWORD = process.env.JWT_PASSWORD;
-const MONGO_URL = process.env.MONGO_URL; //db url
+const MONGO_URL = process.env.MONGO_URL;
 const middleware_1 = require("./middleware");
-//db connection
+// Database Connection
 main()
-    .then(() => {
-    console.log("Connected to DB");
-})
-    .catch((err) => {
-    console.log(err);
-});
+    .then(() => console.log("Connected to DB"))
+    .catch((err) => console.log(err));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         yield mongoose_1.default.connect(MONGO_URL);
@@ -39,8 +35,9 @@ function main() {
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-app.use((0, cors_1.default)({ origin: "http://localhost:5173", credentials: true }));
-// User signup
+// ✅ Improved CORS Setup
+app.use((0, cors_1.default)({ origin: "http://localhost:5173", credentials: true, methods: ["GET", "POST", "DELETE"] }));
+// ✅ User Signup
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password } = req.body;
     try {
@@ -52,7 +49,7 @@ app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.json({ message: "User already exists" });
     }
 }));
-// User signin
+// ✅ User Signin
 app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, password } = req.body;
     const existingUser = yield db_1.UserModel.findOne({ username, password });
@@ -64,19 +61,15 @@ app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.json({ message: "Invalid username or password" });
     }
 }));
-// Generate random hash of 10 characters
+// ✅ Generate Random Hash for Sharing Content
 function random(length) {
     const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
+    return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
 }
-// 💡 Share brain (Create or Retrieve Existing Link)
+// ✅ Share Brain
 app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const share = req.body.share === true || req.body.share === "true"; //Converts "true"/"false" string to boolean
-    const userId = req.userId; //Fix TypeScript error
+    const share = req.body.share === true || req.body.share === "true";
+    const userId = req.userId;
     if (!userId) {
         res.status(401).json({ message: "Unauthorized" });
         return;
@@ -96,17 +89,13 @@ app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awa
             res.status(404).json({ message: "No shared brain found to remove" });
             return;
         }
-        //Ensure the link is deleted successfully.
         const deleted = yield db_1.LinkModel.deleteOne({ userId });
-        if (deleted.deletedCount > 0) {
-            res.json({ message: "Brain unshared successfully" });
-        }
-        else {
-            res.status(500).json({ message: "Failed to unshare brain" });
-        }
+        deleted.deletedCount > 0
+            ? res.json({ message: "Brain unshared successfully" })
+            : res.status(500).json({ message: "Failed to unshare brain" });
     }
 }));
-// 💡 Retrieve Content Using Shared Link
+// ✅ Retrieve Content Using Shared Link
 app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { shareLink } = req.params;
     const link = yield db_1.LinkModel.findOne({ hash: shareLink });
@@ -122,7 +111,7 @@ app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void
     }
     res.json({ username: user.username, content });
 }));
-// 💡 Get User Content
+// ✅ Get User Content
 app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userId = req.userId;
@@ -130,19 +119,16 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
             res.status(401).json({ message: "Unauthorized access" });
             return;
         }
-        const { type } = req.query; // ✅ Extract query parameter
+        const { type } = req.query;
         const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
-        // ✅ Validate type parameter (optional)
         if (type && !allowedTypes.includes(type)) {
             res.status(400).json({ message: "Invalid content type" });
             return;
         }
-        // ✅ Construct dynamic query (fetch all or filter by type)
         const query = { userId };
         if (type)
             query.type = type;
         const content = yield db_1.ContentModel.find(query).populate("userId");
-        // ✅ Return empty array if no content found
         res.status(200).json(content.length ? content : []);
     }
     catch (error) {
@@ -150,19 +136,21 @@ app.get("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(
         res.status(500).json({ message: "Internal Server Error" });
     }
 }));
-//@ts-ignore
+// ✅ Add Content (With Tags)
 app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, link, type } = req.body;
+    const { title, link, type, tags } = req.body;
     const userId = req.userId;
     if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
+        res.status(401).json({ message: "Unauthorized" });
+        return;
     }
-    const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
+    const allowedTypes = ["tweets", "videos", "links", "documents"];
     if (!allowedTypes.includes(type)) {
-        return res.status(400).json({ message: "Invalid content type" });
+        res.status(400).json({ message: "Invalid content type" });
+        return;
     }
     try {
-        const newContent = yield db_1.ContentModel.create({ title, link, userId, type, tags: [] });
+        const newContent = yield db_1.ContentModel.create({ title, link, type, tags, userId });
         res.status(201).json({ message: "Content added", content: newContent });
     }
     catch (error) {
@@ -170,18 +158,18 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
         res.status(500).json({ message: "Failed to add content" });
     }
 }));
-// 💡 Delete Content
+// ✅ Delete Content (Efficient & Secure)
 app.delete("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const contentId = req.body.contentId;
+    const { contentId } = req.body;
     const userId = req.userId;
-    const deleted = yield db_1.ContentModel.deleteMany({ _id: contentId, userId });
-    if (deleted.deletedCount === 0) {
+    const deleted = yield db_1.ContentModel.findOneAndDelete({ _id: contentId, userId });
+    if (!deleted) {
         res.status(404).json({ message: "Content not found" });
         return;
     }
-    res.json({ message: "Content deleted" });
+    res.json({ message: "Content deleted successfully" });
 }));
-// Start the server
+// ✅ Start the Server
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });

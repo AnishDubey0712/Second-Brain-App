@@ -17,7 +17,7 @@ const ContentSchema = new mongoose_2.Schema({
     title: { type: String, required: true },
     link: { type: String, required: true },
     type: { type: String, enum: ["tweets", "videos", "links", "documents", "tags"], required: true }, // 🔥 New Field
-    tags: [{ type: mongoose_1.default.Types.ObjectId, ref: "Tag", default: [] }],
+    tags: [{ type: String }],
     userId: { type: mongoose_1.default.Types.ObjectId, ref: "User", required: true }
 });
 exports.ContentModel = mongoose_1.default.model("Content", ContentSchema);

@@ -13,7 +13,7 @@ const ContentSchema = new Schema({
   title: { type: String, required: true },
   link: { type: String, required: true },
   type: { type: String, enum: ["tweets", "videos", "links", "documents", "tags"], required: true }, // 🔥 New Field
-  tags: [{ type: mongoose.Types.ObjectId, ref: "Tag", default: [] }],
+  tags: [{ type: String }],
   userId: { type: mongoose.Types.ObjectId, ref: "User", required: true }
 });
 

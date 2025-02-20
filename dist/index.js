@@ -96,7 +96,7 @@ app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awa
             res.status(404).json({ message: "No shared brain found to remove" });
             return;
         }
-        //Ensure the link is deleted successfully
+        //Ensure the link is deleted successfully.
         const deleted = yield db_1.LinkModel.deleteOne({ userId });
         if (deleted.deletedCount > 0) {
             res.json({ message: "Brain unshared successfully" });

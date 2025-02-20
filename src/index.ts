@@ -158,26 +158,27 @@ app.get("/api/v1/content", userMiddleware, async (req, res): Promise<void> => {
 
 //@ts-ignore
 app.post("/api/v1/content", userMiddleware, async (req, res) => {
-  const { title, link, type } = req.body;
+  const { title, link, type, tags } = req.body;
   const userId = (req as any).userId;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  const allowedTypes = ["tweets", "videos", "links", "documents", "tags"];
+  const allowedTypes = ["tweets", "videos", "links", "documents"];
   if (!allowedTypes.includes(type)) {
     return res.status(400).json({ message: "Invalid content type" });
   }
 
   try {
-    const newContent = await ContentModel.create({ title, link, userId, type, tags: [] });
+    const newContent = await ContentModel.create({ title, link, type, tags, userId });
     res.status(201).json({ message: "Content added", content: newContent });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to add content" });
   }
 });
+
 
 
 

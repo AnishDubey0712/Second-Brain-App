@@ -64,32 +64,36 @@ app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
   const userId = (req as any).userId;
 
   if (!userId) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const existingLink = await LinkModel.findOne({ userId });
 
   if (share) {
     if (existingLink) {
-      res.json({ message: "Brain already shared", hash: existingLink.hash });
-      return;
+      return res.json({ 
+        message: "Brain already shared", 
+        shareUrl: `http://localhost:5173/shared/${existingLink.hash}` // ✅ Send full URL 
+      });
     }
+    
     const hash = random(10);
     await LinkModel.create({ hash, userId });
-    res.json({ message: "Brain shared", hash });
+
+    res.json({ 
+      message: "Brain shared", 
+      shareUrl: `http://localhost:5173/shared/${hash}` // ✅ Full shareable link
+    });
   } else {
     if (!existingLink) {
-      res.status(404).json({ message: "No shared brain found to remove" });
-      return;
+      return res.status(404).json({ message: "No shared brain found to remove" });
     }
 
-    const deleted = await LinkModel.deleteOne({ userId });
-    deleted.deletedCount > 0
-      ? res.json({ message: "Brain unshared successfully" })
-      : res.status(500).json({ message: "Failed to unshare brain" });
+    await LinkModel.deleteOne({ userId });
+    res.json({ message: "Brain unshared successfully" });
   }
 });
+
 
 // ✅ Retrieve Content Using Shared Link
 app.get("/api/v1/brain/:shareLink", async (req, res) => {

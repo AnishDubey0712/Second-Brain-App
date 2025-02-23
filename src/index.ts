@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { UserModel, ContentModel, LinkModel } from "./db";
 import cors from "cors";
-
+import { Request, Response, NextFunction } from "express";
 dotenv.config();
 
 export const JWT_PASSWORD = process.env.JWT_PASSWORD as string;
@@ -59,40 +59,32 @@ function random(length: number): string {
 }
 
 // ✅ Share Brain
-app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
-  const share = req.body.share === true || req.body.share === "true";
-  const userId = (req as any).userId;
-
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const existingLink = await LinkModel.findOne({ userId });
-
-  if (share) {
-    if (existingLink) {
-      return res.json({ 
-        message: "Brain already shared", 
-        shareUrl: `http://localhost:5173/shared/${existingLink.hash}` // ✅ Send full URL 
-      });
-    }
+app.post("/api/v1/brain/share", userMiddleware, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).userId;
     
-    const hash = random(10);
-    await LinkModel.create({ hash, userId });
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    let existingLink = await LinkModel.findOne({ userId });
+
+    if (!existingLink) {
+      const hash = random(10);
+      existingLink = await LinkModel.create({ hash, userId });
+    }
 
     res.json({ 
       message: "Brain shared", 
-      shareUrl: `http://localhost:5173/shared/${hash}` // ✅ Full shareable link
+      hash: existingLink.hash 
     });
-  } else {
-    if (!existingLink) {
-      return res.status(404).json({ message: "No shared brain found to remove" });
-    }
-
-    await LinkModel.deleteOne({ userId });
-    res.json({ message: "Brain unshared successfully" });
+  } catch (error) {
+    console.error("Error generating share link:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 
 // ✅ Retrieve Content Using Shared Link

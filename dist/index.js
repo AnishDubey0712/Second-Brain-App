@@ -68,31 +68,25 @@ function random(length) {
 }
 // ✅ Share Brain
 app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const share = req.body.share === true || req.body.share === "true";
-    const userId = req.userId;
-    if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-    }
-    const existingLink = yield db_1.LinkModel.findOne({ userId });
-    if (share) {
-        if (existingLink) {
-            res.json({ message: "Brain already shared", hash: existingLink.hash });
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized" });
             return;
         }
-        const hash = random(10);
-        yield db_1.LinkModel.create({ hash, userId });
-        res.json({ message: "Brain shared", hash });
-    }
-    else {
+        let existingLink = yield db_1.LinkModel.findOne({ userId });
         if (!existingLink) {
-            res.status(404).json({ message: "No shared brain found to remove" });
-            return;
+            const hash = random(10);
+            existingLink = yield db_1.LinkModel.create({ hash, userId });
         }
-        const deleted = yield db_1.LinkModel.deleteOne({ userId });
-        deleted.deletedCount > 0
-            ? res.json({ message: "Brain unshared successfully" })
-            : res.status(500).json({ message: "Failed to unshare brain" });
+        res.json({
+            message: "Brain shared",
+            hash: existingLink.hash
+        });
+    }
+    catch (error) {
+        console.error("Error generating share link:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }));
 // ✅ Retrieve Content Using Shared Link

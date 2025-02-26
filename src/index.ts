@@ -58,7 +58,7 @@ function random(length: number): string {
   return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
 }
 
-// ✅ Share Brain
+//Share Brain
 app.post("/api/v1/brain/share", userMiddleware, async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).userId;

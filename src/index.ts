@@ -52,7 +52,7 @@ app.post("/api/v1/signin", async (req, res) => {
   }
 });
 
-// ✅ Generate Random Hash for Sharing Content
+// Generate Random Hash for Sharing Content
 function random(length: number): string {
   const characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   return Array.from({ length }, () => characters.charAt(Math.floor(Math.random() * characters.length))).join("");
